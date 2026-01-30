@@ -87,6 +87,7 @@ export default function JsonPanelContainer() {
           </div>
           <PanelDivider
             onResize={onResize}
+            editorHeight={editorHeight}
             showEditorSync
             syncEditors={syncEditors}
             onToggleSyncEditors={toggleSyncEditors}
@@ -129,6 +130,8 @@ export default function JsonPanelContainer() {
       </div>
       <PanelDivider
         onResize={onResize}
+        editorHeight={editorHeight}
+        parsedHeight={parsedHeight}
         showEditorSync
         syncEditors={syncEditors}
         onToggleSyncEditors={toggleSyncEditors}
@@ -162,6 +165,8 @@ export default function JsonPanelContainer() {
 
 function PanelDivider({
   onResize,
+  editorHeight,
+  parsedHeight,
   showEditorSync,
   syncEditors,
   onToggleSyncEditors,
@@ -170,6 +175,8 @@ function PanelDivider({
   onToggleSyncParsed,
 }: {
   onResize: (percent: number) => void;
+  editorHeight: number;
+  parsedHeight?: number;
   showEditorSync: boolean;
   syncEditors: boolean;
   onToggleSyncEditors: () => void;
@@ -221,25 +228,36 @@ function PanelDivider({
     <div
       ref={dividerRef}
       onMouseDown={onMouseDown}
-      className="flex flex-col items-center w-12 flex-shrink-0 cursor-col-resize select-none gap-3 py-4"
+      className="flex flex-col items-center w-12 flex-shrink-0 cursor-col-resize select-none"
     >
-      {/* Top sync — centered vertically within the editor area */}
-      {showEditorSync && (
-        <div className="pt-4">
-          <SyncToggle active={syncEditors} onClick={onToggleSyncEditors} label="sync" />
-        </div>
-      )}
+      {/* Spacer matching the label row (text-xs ~16px + mb-2 8px) */}
+      <div className="h-6 flex-shrink-0" />
 
-      {/* Drag line */}
-      <div className="flex-1 flex items-center justify-center group">
-        <div className="w-0.5 h-12 rounded-full bg-cosmos-700 group-hover:bg-nebula-500 group-hover:h-20 transition-all" />
+      {/* Editor zone — matches editor box height, centers sync button */}
+      <div
+        style={{ height: `${editorHeight}px` }}
+        className="flex-shrink-0 flex items-center justify-center"
+      >
+        {showEditorSync && (
+          <SyncToggle active={syncEditors} onClick={onToggleSyncEditors} label="sync" />
+        )}
       </div>
 
-      {/* Bottom sync — for parsed views */}
       {showParsedSync && (
-        <div className="pb-2">
-          <SyncToggle active={syncParsed} onClick={onToggleSyncParsed} label="sync" />
-        </div>
+        <>
+          {/* Spacer matching the horizontal drag handle (h-2 + my-0.5 ≈ 12px) */}
+          <div className="h-3 flex-shrink-0 flex items-center justify-center group">
+            <div className="w-0.5 h-full rounded-full bg-cosmos-700 group-hover:bg-nebula-500 transition-all" />
+          </div>
+
+          {/* Parsed zone — matches parsed box height, centers sync button */}
+          <div
+            style={{ height: `${parsedHeight}px` }}
+            className="flex-shrink-0 flex items-center justify-center"
+          >
+            <SyncToggle active={syncParsed} onClick={onToggleSyncParsed} label="sync" />
+          </div>
+        </>
       )}
     </div>
   );
