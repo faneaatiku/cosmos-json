@@ -1,7 +1,8 @@
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { getCosmicExtensions } from "../lib/codemirrorSetup";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState, useCallback } from "react";
+import { WrapText, Minus, Copy, Check } from "lucide-react";
 
 interface JsonPanelProps {
   label: string;
@@ -22,11 +23,44 @@ export default function JsonPanel({
 }: JsonPanelProps) {
   const extensions = useMemo(() => [json(), ...getCosmicExtensions()], []);
   const editorBoxRef = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleFormat = useCallback(() => {
+    try {
+      onChange(JSON.stringify(JSON.parse(value), null, 2));
+    } catch { /* ignore invalid JSON */ }
+  }, [value, onChange]);
+
+  const handleMinify = useCallback(() => {
+    try {
+      onChange(JSON.stringify(JSON.parse(value)));
+    } catch { /* ignore invalid JSON */ }
+  }, [value, onChange]);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [value]);
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
-      <div className="text-xs font-semibold text-cosmos-400 uppercase tracking-wider px-1 mb-2">
-        {label}
+      <div className="flex items-center justify-between px-1 mb-2">
+        <div className="text-xs font-semibold text-cosmos-400 uppercase tracking-wider">
+          {label}
+        </div>
+        <div className="flex items-center gap-1">
+          <ToolbarButton title="Pretty format" onClick={handleFormat}>
+            <WrapText size={13} />
+          </ToolbarButton>
+          <ToolbarButton title="Minify" onClick={handleMinify}>
+            <Minus size={13} />
+          </ToolbarButton>
+          <ToolbarButton title="Copy" onClick={handleCopy}>
+            {copied ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}
+          </ToolbarButton>
+        </div>
       </div>
       <div
         ref={editorBoxRef}
@@ -54,6 +88,26 @@ export default function JsonPanel({
       )}
       {children}
     </div>
+  );
+}
+
+function ToolbarButton({
+  title,
+  onClick,
+  children,
+}: {
+  title: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      title={title}
+      onClick={onClick}
+      className="p-1 rounded text-cosmos-500 hover:text-cosmos-200 hover:bg-cosmos-700/60 transition-all cursor-pointer"
+    >
+      {children}
+    </button>
   );
 }
 
