@@ -37,7 +37,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           </button>
         </div>
 
-        <div className="p-4 space-y-6 overflow-auto h-[calc(100%-57px)]">
+        <div className="p-4 pr-5 space-y-6 overflow-auto h-[calc(100%-57px)]">
           {/* Toggles section */}
           <div className="space-y-3">
             <div className="text-sm font-semibold text-cosmos-200">Display</div>

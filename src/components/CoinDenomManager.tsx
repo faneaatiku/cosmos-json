@@ -51,38 +51,42 @@ export default function CoinDenomManager() {
         denoms default to 6 decimals.
       </div>
 
-      <div className="flex gap-2">
+      <div className="space-y-2">
         <input
           type="text"
-          placeholder="Denom"
+          placeholder="Denom (e.g. ubze, stake)"
           value={denom}
           onChange={(e) => setDenom(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="flex-1 px-3 py-1.5 rounded-lg bg-cosmos-800 border border-cosmos-700 text-cosmos-100 text-sm placeholder:text-cosmos-600 focus:outline-none focus:border-nebula-500/50"
+          className="w-full px-3 py-1.5 rounded-lg bg-cosmos-800 border border-cosmos-700 text-cosmos-100 text-sm placeholder:text-cosmos-600 focus:outline-none focus:border-nebula-500/50"
         />
-        <input
-          type="number"
-          placeholder="Dec"
-          min={0}
-          value={decimals}
-          onChange={(e) => setDecimals(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="w-16 px-3 py-1.5 rounded-lg bg-cosmos-800 border border-cosmos-700 text-cosmos-100 text-sm placeholder:text-cosmos-600 focus:outline-none focus:border-nebula-500/50"
-        />
-        <input
-          type="text"
-          placeholder="Symbol"
-          value={displayDenom}
-          onChange={(e) => setDisplayDenom(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="w-20 px-3 py-1.5 rounded-lg bg-cosmos-800 border border-cosmos-700 text-cosmos-100 text-sm placeholder:text-cosmos-600 focus:outline-none focus:border-nebula-500/50"
-        />
-        <button
-          onClick={addDenom}
-          className="p-1.5 rounded-lg bg-nebula-500/20 text-nebula-400 hover:bg-nebula-500/30 transition-colors cursor-pointer"
-        >
-          <Plus size={18} />
-        </button>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Symbol"
+            value={displayDenom}
+            onChange={(e) => setDisplayDenom(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-20 px-3 py-1.5 rounded-lg bg-cosmos-800 border border-cosmos-700 text-cosmos-100 text-sm placeholder:text-cosmos-600 focus:outline-none focus:border-nebula-500/50"
+          />
+          <input
+            type="number"
+            placeholder="Dec"
+            min={0}
+            max={20}
+            value={decimals}
+            onChange={(e) => setDecimals(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-14 px-2 py-1.5 rounded-lg bg-cosmos-800 border border-cosmos-700 text-cosmos-100 text-sm placeholder:text-cosmos-600 focus:outline-none focus:border-nebula-500/50 text-center"
+          />
+          <button
+            onClick={addDenom}
+            className="flex-1 py-1.5 rounded-lg bg-nebula-500/20 text-nebula-400 hover:bg-nebula-500/30 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <Plus size={16} />
+            <span className="text-sm font-medium">Add</span>
+          </button>
+        </div>
       </div>
 
       {settings.coinDenoms.length > 0 && (
@@ -90,22 +94,22 @@ export default function CoinDenomManager() {
           {settings.coinDenoms.map((item) => (
             <div
               key={item.denom}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cosmos-800/60 border border-cosmos-700/50 group"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg bg-cosmos-800/60 border border-cosmos-700/50 group"
             >
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-nebula-300 font-medium">
+                <div className="text-xs text-cosmos-400 truncate">
                   {item.denom}
-                  <span className="ml-2 text-cosmos-500">
-                    {item.decimals} dec
-                  </span>
-                </div>
-                <div className="text-xs text-cosmos-500 truncate">
-                  {item.displayDenom}
                 </div>
               </div>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-star-500/15 text-star-400 text-xs font-medium flex-shrink-0">
+                {item.displayDenom}
+              </span>
+              <span className="text-xs text-cosmos-500 flex-shrink-0">
+                {item.decimals}d
+              </span>
               <button
                 onClick={() => removeDenom(item.denom)}
-                className="p-1 rounded text-cosmos-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                className="p-1 rounded text-cosmos-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all cursor-pointer flex-shrink-0"
               >
                 <Trash2 size={14} />
               </button>
