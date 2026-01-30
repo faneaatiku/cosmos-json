@@ -1,5 +1,5 @@
-export interface AddressLabel {
-  address: string;
+export interface Label {
+  value: string;
   label: string;
 }
 
@@ -8,7 +8,7 @@ export interface Settings {
   sortKeys: boolean;
   compareMode: boolean;
   dualPanel: boolean;
-  addressLabels: AddressLabel[];
+  labels: Label[];
 }
 
 export type JsonValue =

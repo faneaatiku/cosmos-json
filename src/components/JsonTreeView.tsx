@@ -6,7 +6,7 @@ import {
   isCoinObject,
   parseCoinObject,
 } from "../lib/coinParser";
-import { getAddressLabel } from "../lib/addressLabeler";
+import { getLabel } from "../lib/labeler";
 import { sortKeys } from "../lib/jsonTransform";
 import CoinDisplay from "./CoinDisplay";
 import type { JsonValue } from "../types";
@@ -88,15 +88,15 @@ function JsonNode({
       }
     }
 
-    // Address label detection
-    const addrLabel = getAddressLabel(value, settings.addressLabels);
+    // Label detection
+    const matchedLabel = getLabel(value, settings.labels);
 
     return (
       <InlineValue keyName={keyName} depth={depth}>
         <span className="text-nebula-400">"{value}"</span>
-        {addrLabel && (
+        {matchedLabel && (
           <span className="ml-1.5 px-1.5 py-0.5 rounded bg-nebula-500/15 text-nebula-300 text-xs font-medium">
-            {addrLabel}
+            {matchedLabel}
           </span>
         )}
       </InlineValue>

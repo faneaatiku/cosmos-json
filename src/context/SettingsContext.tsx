@@ -12,19 +12,22 @@ const defaultSettings: Settings = {
   sortKeys: false,
   compareMode: false,
   dualPanel: true,
-  addressLabels: [],
+  labels: [],
 };
 
 const SettingsContext = createContext<SettingsContextType | null>(null);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useLocalStorage<Settings>(
+  const [raw, setRaw] = useLocalStorage<Partial<Settings>>(
     "cosmos-json-settings",
     defaultSettings,
   );
 
+  // Merge stored value with defaults so new keys are always present
+  const settings: Settings = { ...defaultSettings, ...raw };
+
   const updateSettings = (partial: Partial<Settings>) => {
-    setSettings((prev) => ({ ...prev, ...partial }));
+    setRaw((prev) => ({ ...prev, ...partial }));
   };
 
   return (

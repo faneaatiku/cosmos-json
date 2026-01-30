@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import AddressLabelManager from "./AddressLabelManager";
+import LabelManager from "./LabelManager";
 import { useSettings } from "../context/SettingsContext";
 
 interface SettingsDrawerProps {
@@ -72,8 +72,8 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
 
           <div className="border-t border-cosmos-700/50" />
 
-          {/* Address Labels */}
-          <AddressLabelManager />
+          {/* Labels */}
+          <LabelManager />
         </div>
       </div>
     </>

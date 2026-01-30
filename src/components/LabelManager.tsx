@@ -2,30 +2,30 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useSettings } from "../context/SettingsContext";
 
-export default function AddressLabelManager() {
+export default function LabelManager() {
   const { settings, updateSettings } = useSettings();
-  const [address, setAddress] = useState("");
+  const [value, setValue] = useState("");
   const [label, setLabel] = useState("");
 
   const addLabel = () => {
-    const trimmedAddr = address.trim();
+    const trimmedValue = value.trim();
     const trimmedLabel = label.trim();
-    if (!trimmedAddr || !trimmedLabel) return;
-    if (settings.addressLabels.some((l) => l.address === trimmedAddr)) return;
+    if (!trimmedValue || !trimmedLabel) return;
+    if (settings.labels.some((l) => l.value === trimmedValue)) return;
 
     updateSettings({
-      addressLabels: [
-        ...settings.addressLabels,
-        { address: trimmedAddr, label: trimmedLabel },
+      labels: [
+        ...settings.labels,
+        { value: trimmedValue, label: trimmedLabel },
       ],
     });
-    setAddress("");
+    setValue("");
     setLabel("");
   };
 
-  const removeLabel = (addr: string) => {
+  const removeLabel = (val: string) => {
     updateSettings({
-      addressLabels: settings.addressLabels.filter((l) => l.address !== addr),
+      labels: settings.labels.filter((l) => l.value !== val),
     });
   };
 
@@ -36,18 +36,18 @@ export default function AddressLabelManager() {
   return (
     <div className="space-y-3">
       <div className="text-sm font-semibold text-cosmos-200">
-        Address Labels
+        Labels
       </div>
       <div className="text-xs text-cosmos-500">
-        Map blockchain addresses to readable labels
+        Tag any JSON value with a readable label
       </div>
 
       <div className="flex gap-2">
         <input
           type="text"
-          placeholder="Address (e.g., cosmos1...)"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          placeholder="Value to match"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           className="flex-1 px-3 py-1.5 rounded-lg bg-cosmos-800 border border-cosmos-700 text-cosmos-100 text-sm placeholder:text-cosmos-600 focus:outline-none focus:border-nebula-500/50"
         />
@@ -67,11 +67,11 @@ export default function AddressLabelManager() {
         </button>
       </div>
 
-      {settings.addressLabels.length > 0 && (
+      {settings.labels.length > 0 && (
         <div className="space-y-1.5 max-h-48 overflow-auto">
-          {settings.addressLabels.map((item) => (
+          {settings.labels.map((item) => (
             <div
-              key={item.address}
+              key={item.value}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cosmos-800/60 border border-cosmos-700/50 group"
             >
               <div className="flex-1 min-w-0">
@@ -79,11 +79,11 @@ export default function AddressLabelManager() {
                   {item.label}
                 </div>
                 <div className="text-xs text-cosmos-500 truncate">
-                  {item.address}
+                  {item.value}
                 </div>
               </div>
               <button
-                onClick={() => removeLabel(item.address)}
+                onClick={() => removeLabel(item.value)}
                 className="p-1 rounded text-cosmos-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
               >
                 <Trash2 size={14} />

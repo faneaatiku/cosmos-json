@@ -21,6 +21,10 @@ export default function JsonPanelContainer() {
   const { settings } = useSettings();
   const [leftPercent, setLeftPercent] = useState(50);
 
+  // Shared heights — dragging one side resizes both
+  const [editorHeight, setEditorHeight] = useState(300);
+  const [parsedHeight, setParsedHeight] = useState(300);
+
   const onResize = useCallback((percent: number) => {
     setLeftPercent(percent);
   }, []);
@@ -31,7 +35,7 @@ export default function JsonPanelContainer() {
   const leftParsedRef = useRef<HTMLDivElement>(null);
   const rightParsedRef = useRef<HTMLDivElement>(null);
 
-  // Editor scroll sync — find .cm-scroller inside each panel wrapper
+  // Editor scroll sync
   useSyncScroll(
     () => leftPanelRef.current?.querySelector(".cm-scroller") as HTMLElement | null,
     () => rightPanelRef.current?.querySelector(".cm-scroller") as HTMLElement | null,
@@ -39,7 +43,7 @@ export default function JsonPanelContainer() {
     [settings.dualPanel],
   );
 
-  // Parsed view scroll sync — uses forwarded refs on ParsedSection
+  // Parsed view scroll sync
   useSyncScroll(
     () => leftParsedRef.current,
     () => rightParsedRef.current,
@@ -51,8 +55,18 @@ export default function JsonPanelContainer() {
   if (!settings.dualPanel) {
     return (
       <div className="flex flex-col flex-1 p-4 min-h-0">
-        <JsonPanel label="JSON" value={leftJson} onChange={setLeftJson}>
-          <ParsedSection json={leftJson} />
+        <JsonPanel
+          label="JSON"
+          value={leftJson}
+          onChange={setLeftJson}
+          editorHeight={editorHeight}
+          onEditorHeightChange={setEditorHeight}
+        >
+          <ParsedSection
+            json={leftJson}
+            height={parsedHeight}
+            onHeightChange={setParsedHeight}
+          />
         </JsonPanel>
       </div>
     );
@@ -62,9 +76,14 @@ export default function JsonPanelContainer() {
   if (settings.compareMode) {
     return (
       <div className="flex flex-col gap-4 flex-1 p-4">
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0 items-start">
           <div ref={leftPanelRef} style={{ width: `${leftPercent}%` }} className="min-w-0">
-            <JsonPanel label="Left" value={leftJson} onChange={setLeftJson} />
+            <JsonPanel
+              label="Left"
+              value={leftJson}
+              onChange={setLeftJson}
+              editorHeight={editorHeight}
+            />
           </div>
           <PanelDivider
             onResize={onResize}
@@ -76,7 +95,12 @@ export default function JsonPanelContainer() {
             onToggleSyncParsed={toggleSyncParsed}
           />
           <div ref={rightPanelRef} style={{ width: `${100 - leftPercent}%` }} className="min-w-0">
-            <JsonPanel label="Right" value={rightJson} onChange={setRightJson} />
+            <JsonPanel
+              label="Right"
+              value={rightJson}
+              onChange={setRightJson}
+              editorHeight={editorHeight}
+            />
           </div>
         </div>
         <DiffView leftJson={leftJson} rightJson={rightJson} />
@@ -86,10 +110,21 @@ export default function JsonPanelContainer() {
 
   // Dual panel — normal mode
   return (
-    <div className="flex flex-1 p-4 min-h-0">
+    <div className="flex flex-1 p-4 min-h-0 items-start">
       <div ref={leftPanelRef} style={{ width: `${leftPercent}%` }} className="min-w-0">
-        <JsonPanel label="Left" value={leftJson} onChange={setLeftJson}>
-          <ParsedSection json={leftJson} scrollRef={leftParsedRef} />
+        <JsonPanel
+          label="Left"
+          value={leftJson}
+          onChange={setLeftJson}
+          editorHeight={editorHeight}
+          onEditorHeightChange={setEditorHeight}
+        >
+          <ParsedSection
+            json={leftJson}
+            scrollRef={leftParsedRef}
+            height={parsedHeight}
+            onHeightChange={setParsedHeight}
+          />
         </JsonPanel>
       </div>
       <PanelDivider
@@ -102,8 +137,19 @@ export default function JsonPanelContainer() {
         onToggleSyncParsed={toggleSyncParsed}
       />
       <div ref={rightPanelRef} style={{ width: `${100 - leftPercent}%` }} className="min-w-0">
-        <JsonPanel label="Right" value={rightJson} onChange={setRightJson}>
-          <ParsedSection json={rightJson} scrollRef={rightParsedRef} />
+        <JsonPanel
+          label="Right"
+          value={rightJson}
+          onChange={setRightJson}
+          editorHeight={editorHeight}
+          onEditorHeightChange={setEditorHeight}
+        >
+          <ParsedSection
+            json={rightJson}
+            scrollRef={rightParsedRef}
+            height={parsedHeight}
+            onHeightChange={setParsedHeight}
+          />
         </JsonPanel>
       </div>
     </div>
@@ -136,7 +182,6 @@ function PanelDivider({
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      // Don't start drag if clicking a sync button
       if ((e.target as HTMLElement).closest("button")) return;
       e.preventDefault();
       dragging.current = true;
@@ -176,10 +221,13 @@ function PanelDivider({
     <div
       ref={dividerRef}
       onMouseDown={onMouseDown}
-      className="flex flex-col items-center w-10 flex-shrink-0 cursor-col-resize select-none py-6"
+      className="flex flex-col items-center w-12 flex-shrink-0 cursor-col-resize select-none gap-3 py-4"
     >
+      {/* Top sync — centered vertically within the editor area */}
       {showEditorSync && (
-        <SyncToggle active={syncEditors} onClick={onToggleSyncEditors} label="sync" />
+        <div className="pt-4">
+          <SyncToggle active={syncEditors} onClick={onToggleSyncEditors} label="sync" />
+        </div>
       )}
 
       {/* Drag line */}
@@ -187,8 +235,11 @@ function PanelDivider({
         <div className="w-0.5 h-12 rounded-full bg-cosmos-700 group-hover:bg-nebula-500 group-hover:h-20 transition-all" />
       </div>
 
+      {/* Bottom sync — for parsed views */}
       {showParsedSync && (
-        <SyncToggle active={syncParsed} onClick={onToggleSyncParsed} label="sync" />
+        <div className="pb-2">
+          <SyncToggle active={syncParsed} onClick={onToggleSyncParsed} label="sync" />
+        </div>
       )}
     </div>
   );
@@ -210,7 +261,7 @@ function SyncToggle({
         onClick();
       }}
       title={active ? `Scroll sync on (${label})` : `Scroll sync off (${label})`}
-      className={`flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-lg border transition-all cursor-pointer ${
+      className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg border transition-all cursor-pointer ${
         active
           ? "text-nebula-300 bg-nebula-500/25 border-nebula-500/50 shadow-[0_0_12px_rgba(139,92,246,0.3)]"
           : "text-cosmos-500 bg-cosmos-800/50 border-cosmos-700/60 hover:text-cosmos-300 hover:border-cosmos-600 hover:bg-cosmos-800/80"
@@ -231,15 +282,16 @@ function SyncToggle({
 function ParsedSection({
   json,
   scrollRef,
+  height,
+  onHeightChange,
 }: {
   json: string;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
+  height: number;
+  onHeightChange: (height: number) => void;
 }) {
-  const [height, setHeight] = useState(300);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
 
-  // Combine the external scrollRef with the internal wrapperRef
   const setRefs = useCallback(
     (el: HTMLDivElement | null) => {
       (wrapperRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
@@ -249,36 +301,6 @@ function ParsedSection({
     },
     [scrollRef],
   );
-
-  const onHandleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    dragging.current = true;
-    document.body.style.cursor = "row-resize";
-    document.body.style.userSelect = "none";
-  }, []);
-
-  useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
-      if (!dragging.current || !wrapperRef.current) return;
-      const rect = wrapperRef.current.getBoundingClientRect();
-      const newHeight = e.clientY - rect.top;
-      setHeight(Math.min(Math.max(newHeight, 80), window.innerHeight - 200));
-    };
-
-    const onMouseUp = () => {
-      if (!dragging.current) return;
-      dragging.current = false;
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-    return () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    };
-  }, []);
 
   const parsed = useMemo(() => {
     if (!json.trim()) return undefined;
@@ -312,7 +334,27 @@ function ParsedSection({
         <JsonTreeView data={parsed} />
       </div>
       <div
-        onMouseDown={onHandleMouseDown}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          document.body.style.cursor = "row-resize";
+          document.body.style.userSelect = "none";
+          const baseTop = wrapperRef.current?.getBoundingClientRect().top ?? 0;
+
+          const onMove = (ev: MouseEvent) => {
+            const h = ev.clientY - baseTop;
+            onHeightChange(Math.min(Math.max(h, 80), window.innerHeight - 200));
+          };
+
+          const onUp = () => {
+            document.body.style.cursor = "";
+            document.body.style.userSelect = "";
+            document.removeEventListener("mousemove", onMove);
+            document.removeEventListener("mouseup", onUp);
+          };
+
+          document.addEventListener("mousemove", onMove);
+          document.addEventListener("mouseup", onUp);
+        }}
         className="h-2 flex-shrink-0 cursor-row-resize group flex items-center justify-center my-0.5"
       >
         <div className="h-0.5 w-12 rounded-full bg-cosmos-700 group-hover:bg-nebula-500 group-hover:w-20 transition-all" />
