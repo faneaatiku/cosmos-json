@@ -22,15 +22,40 @@ Examples:
 ```sh
 # Node (preview)
 npm run preview
+```
 
-# nginx
-# root /path/to/dist;
-# try_files $uri $uri/ /index.html;
+### Nginx vhost
 
-# caddy
-# root * /path/to/dist
-# try_files {path} /index.html
-# file_server
+```nginx
+server {
+    listen 80;
+    server_name json.example.com;
+
+    root /var/www/cosmos-json/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location ~* \.(?:js|css|woff2?|svg|png|jpg|ico)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    gzip on;
+    gzip_types text/html application/javascript text/css application/json image/svg+xml;
+}
+```
+
+### Caddy
+
+```
+json.example.com {
+    root * /var/www/cosmos-json/dist
+    try_files {path} /index.html
+    file_server
+}
 ```
 
 ## Dev

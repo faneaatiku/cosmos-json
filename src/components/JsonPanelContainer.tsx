@@ -225,38 +225,50 @@ function PanelDivider({
     <div
       ref={dividerRef}
       onMouseDown={onMouseDown}
-      className="flex flex-col items-center w-12 flex-shrink-0 cursor-col-resize select-none"
+      className="flex flex-col items-center w-12 flex-shrink-0 cursor-col-resize select-none group/divider"
     >
-      {/* Spacer matching the label row (text-xs ~16px + mb-2 8px) */}
-      <div className="h-6 flex-shrink-0" />
+      {/* Spacer matching the label row */}
+      <div className="h-6 flex-shrink-0 flex justify-center">
+        <DividerLine />
+      </div>
 
-      {/* Editor zone — matches editor box height, centers sync button */}
+      {/* Editor zone — line segments around the sync button */}
       <div
         style={{ height: `${editorHeight}px` }}
-        className="flex-shrink-0 flex items-center justify-center"
+        className="flex-shrink-0 flex flex-col items-center"
       >
+        <DividerLine className="flex-1" />
         {showEditorSync && (
           <SyncToggle active={syncEditors} onClick={onToggleSyncEditors} label="sync" />
         )}
+        <DividerLine className="flex-1" />
       </div>
 
       {showParsedSync && (
         <>
-          {/* Spacer matching the horizontal drag handle (h-2 + my-0.5 ≈ 12px) */}
-          <div className="h-3 flex-shrink-0 flex items-center justify-center group">
-            <div className="w-0.5 h-full rounded-full bg-cosmos-700 group-hover:bg-nebula-500 transition-all" />
+          {/* Spacer matching the horizontal drag handle */}
+          <div className="h-3 flex-shrink-0 flex justify-center">
+            <DividerLine />
           </div>
 
-          {/* Parsed zone — matches parsed box height, centers sync button */}
+          {/* Parsed zone — line segments around the sync button */}
           <div
             style={{ height: `${parsedHeight}px` }}
-            className="flex-shrink-0 flex items-center justify-center"
+            className="flex-shrink-0 flex flex-col items-center"
           >
+            <DividerLine className="flex-1" />
             <SyncToggle active={syncParsed} onClick={onToggleSyncParsed} label="sync" />
+            <DividerLine className="flex-1" />
           </div>
         </>
       )}
     </div>
+  );
+}
+
+function DividerLine({ className = "" }: { className?: string }) {
+  return (
+    <div className={`w-px bg-cosmos-700/60 group-hover/divider:w-0.5 group-hover/divider:bg-nebula-500/50 transition-all ${className}`} />
   );
 }
 
