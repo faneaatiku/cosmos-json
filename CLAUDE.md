@@ -35,8 +35,8 @@ src/
 │   ├── Layout.tsx                    # App shell wrapping CosmicBackground
 │   ├── CosmicBackground.tsx          # Canvas star animation (fixed, pointer-events-none)
 │   ├── Header.tsx                    # Title + toggle buttons (Sort Keys, Parse Coins, Dual/Single, Compare) + settings gear
-│   ├── JsonPanelContainer.tsx        # Panel layout; single/dual with vertical resize, scroll sync, PanelDivider + SyncToggle inlined
-│   ├── JsonPanel.tsx                 # CodeMirror editor with horizontal resize handle between editor and parsed view
+│   ├── JsonPanelContainer.tsx        # Panel layout; single/dual mode, PanelDivider (height-matched sync buttons + vertical resize), ParsedSection (resizable parsed view), scroll sync via useSyncScroll
+│   ├── JsonPanel.tsx                 # CodeMirror editor; accepts editorHeight + onEditorHeightChange props (lifted state, shared across panels in dual mode)
 │   ├── JsonTreeView.tsx              # Recursive JSON renderer with coin/label transforms applied visually
 │   ├── DiffView.tsx                  # jsondiffpatch HTML output with themed styling
 │   ├── CoinDisplay.tsx               # Inline coin badge (amount + denom)
@@ -56,6 +56,9 @@ src/
 - **String-based coin math** — `coinParser.ts` pads and slices strings instead of using floating-point division to avoid precision errors. Hardcoded 6 decimal places.
 - **Zustand for editors, Context for settings** — editors update every keystroke (needs fine-grained subscriptions), settings change rarely.
 - **Tailwind v4 theme** — custom colors defined in `@theme` block in `index.css`, not in a config file. Use `cosmos-*`, `nebula-*`, `star-*` color names.
+- **Linked resize** — editor height and parsed view height are shared state in `JsonPanelContainer`. Dragging the resize handle on either side resizes both panels. Heights are passed as props; `JsonPanel` and `ParsedSection` report absolute pixel values back.
+- **PanelDivider mirrors panel layout** — uses `editorHeight`/`parsedHeight` props to create height-matched sections so each sync button sits vertically centered within its corresponding box. A spacer matches the label row, and a small divider line sits between the two zones.
+- **Settings migration safety** — `SettingsContext` merges stored localStorage with `defaultSettings` (`{ ...defaultSettings, ...raw }`) so new keys always have defaults even with stale storage.
 
 ## Coin Parsing
 
