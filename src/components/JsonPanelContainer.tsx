@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useCallback, useRef, useEffect, useMemo } from "react";
 import { Link2, Link2Off } from "lucide-react";
 import { useEditorStore } from "../store/editorStore";
 import { useSettings } from "../context/SettingsContext";
@@ -17,17 +17,14 @@ export default function JsonPanelContainer() {
     syncParsed,
     toggleSyncEditors,
     toggleSyncParsed,
+    leftPercent,
+    setLeftPercent,
+    editorHeight,
+    setEditorHeight,
+    parsedHeight,
+    setParsedHeight,
   } = useEditorStore();
   const { settings } = useSettings();
-  const [leftPercent, setLeftPercent] = useState(50);
-
-  // Shared heights — dragging one side resizes both
-  const [editorHeight, setEditorHeight] = useState(300);
-  const [parsedHeight, setParsedHeight] = useState(300);
-
-  const onResize = useCallback((percent: number) => {
-    setLeftPercent(percent);
-  }, []);
 
   // Refs for scroll sync
   const leftPanelRef = useRef<HTMLDivElement>(null);
@@ -86,7 +83,7 @@ export default function JsonPanelContainer() {
             />
           </div>
           <PanelDivider
-            onResize={onResize}
+            onResize={setLeftPercent}
             editorHeight={editorHeight}
             showEditorSync
             syncEditors={syncEditors}
@@ -129,7 +126,7 @@ export default function JsonPanelContainer() {
         </JsonPanel>
       </div>
       <PanelDivider
-        onResize={onResize}
+        onResize={setLeftPercent}
         editorHeight={editorHeight}
         parsedHeight={parsedHeight}
         showEditorSync
