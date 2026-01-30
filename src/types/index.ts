@@ -7,6 +7,7 @@ export interface Settings {
   parseCoins: boolean;
   sortKeys: boolean;
   compareMode: boolean;
+  dualPanel: boolean;
   addressLabels: AddressLabel[];
 }
 

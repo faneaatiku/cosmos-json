@@ -56,6 +56,13 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             />
 
             <SettingToggle
+              label="Dual Panel"
+              description="Show two side-by-side JSON panels"
+              checked={settings.dualPanel}
+              onChange={(v) => updateSettings({ dualPanel: v })}
+            />
+
+            <SettingToggle
               label="Compare Mode"
               description="Show diff between left and right JSON panels"
               checked={settings.compareMode}

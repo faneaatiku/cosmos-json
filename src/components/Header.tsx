@@ -3,6 +3,8 @@ import {
   SortAsc,
   Settings,
   Coins,
+  Columns2,
+  Square,
 } from "lucide-react";
 import { useSettings } from "../context/SettingsContext";
 
@@ -62,6 +64,14 @@ export default function Header({ onOpenSettings }: HeaderProps) {
           onClick={() => updateSettings({ parseCoins: !settings.parseCoins })}
           icon={Coins}
           label="Parse Coins"
+        />
+        <ToggleButton
+          active={settings.dualPanel}
+          onClick={() =>
+            updateSettings({ dualPanel: !settings.dualPanel })
+          }
+          icon={settings.dualPanel ? Columns2 : Square}
+          label={settings.dualPanel ? "Dual" : "Single"}
         />
         <ToggleButton
           active={settings.compareMode}

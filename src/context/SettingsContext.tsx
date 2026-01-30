@@ -11,6 +11,7 @@ const defaultSettings: Settings = {
   parseCoins: true,
   sortKeys: false,
   compareMode: false,
+  dualPanel: true,
   addressLabels: [],
 };
 

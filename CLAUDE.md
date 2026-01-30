@@ -28,14 +28,15 @@ src/
 ├── vite-env.d.ts
 ├── types/index.ts                    # AddressLabel, Settings, JsonValue types
 ├── hooks/useLocalStorage.ts          # Generic localStorage hook
-├── context/SettingsContext.tsx        # Settings state: parseCoins, sortKeys, compareMode, addressLabels
-├── store/editorStore.ts              # Zustand: leftJson, rightJson strings
+├── hooks/useSyncScroll.ts           # Bidirectional scroll sync between two elements (used for dual panel sync)
+├── context/SettingsContext.tsx        # Settings state: parseCoins, sortKeys, compareMode, dualPanel, addressLabels
+├── store/editorStore.ts              # Zustand: leftJson, rightJson, syncEditors, syncParsed
 ├── components/
 │   ├── Layout.tsx                    # App shell wrapping CosmicBackground
 │   ├── CosmicBackground.tsx          # Canvas star animation (fixed, pointer-events-none)
-│   ├── Header.tsx                    # Title + toggle buttons (Sort Keys, Parse Coins, Compare) + settings gear
-│   ├── JsonPanelContainer.tsx        # Dual panel layout; switches between parsed view and diff view based on compareMode
-│   ├── JsonPanel.tsx                 # Single CodeMirror editor with label
+│   ├── Header.tsx                    # Title + toggle buttons (Sort Keys, Parse Coins, Dual/Single, Compare) + settings gear
+│   ├── JsonPanelContainer.tsx        # Panel layout; single/dual with vertical resize, scroll sync, PanelDivider + SyncToggle inlined
+│   ├── JsonPanel.tsx                 # CodeMirror editor with horizontal resize handle between editor and parsed view
 │   ├── JsonTreeView.tsx              # Recursive JSON renderer with coin/address transforms applied visually
 │   ├── DiffView.tsx                  # jsondiffpatch HTML output with themed styling
 │   ├── CoinDisplay.tsx               # Inline coin badge (amount + denom)
