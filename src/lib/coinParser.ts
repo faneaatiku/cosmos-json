@@ -1,5 +1,8 @@
-const COIN_STRING_REGEX = /^(\d+)(u[a-z][a-z0-9]{2,})$/;
-const DECIMALS = 6;
+import type { CoinDenomConfig } from "../types";
+
+const COIN_STRING_REGEX = /^(\d+)([a-z][a-z0-9]+)$/;
+const COIN_DENOM_REGEX = /^[a-z][a-z0-9]+$/;
+const DEFAULT_DECIMALS = 6;
 
 export interface ParsedCoin {
   amount: string;
@@ -9,14 +12,18 @@ export interface ParsedCoin {
 }
 
 /**
- * Try to parse a string like "123231ubze" into a formatted coin.
+ * Try to parse a string like "123231ubze" or "123231stake" into a formatted coin.
  */
-export function parseCoinString(value: string): ParsedCoin | null {
+export function parseCoinString(
+  value: string,
+  denomConfigs: CoinDenomConfig[] = [],
+): ParsedCoin | null {
   const match = value.match(COIN_STRING_REGEX);
   if (!match) return null;
 
   const [, rawAmount, denom] = match;
-  return formatCoin(rawAmount, denom);
+  const config = denomConfigs.find((c) => c.denom === denom);
+  return formatCoin(rawAmount, denom, config);
 }
 
 /**
@@ -35,36 +42,46 @@ export function isCoinObject(
     typeof o.amount === "string" &&
     typeof o.denom === "string" &&
     /^\d+$/.test(o.amount) &&
-    /^u[a-z][a-z0-9]{2,}$/.test(o.denom)
+    COIN_DENOM_REGEX.test(o.denom)
   );
 }
 
 /**
  * Parse a Cosmos SDK coin object into a formatted coin.
  */
-export function parseCoinObject(obj: {
-  amount: string;
-  denom: string;
-}): ParsedCoin {
-  return formatCoin(obj.amount, obj.denom);
+export function parseCoinObject(
+  obj: { amount: string; denom: string },
+  denomConfigs: CoinDenomConfig[] = [],
+): ParsedCoin {
+  const config = denomConfigs.find((c) => c.denom === obj.denom);
+  return formatCoin(obj.amount, obj.denom, config);
 }
 
-function formatCoin(rawAmount: string, denom: string): ParsedCoin {
-  const displayDenom = denom.slice(1).toUpperCase();
-  const displayAmount = formatAmount(rawAmount);
+function formatCoin(
+  rawAmount: string,
+  denom: string,
+  config?: CoinDenomConfig,
+): ParsedCoin {
+  const decimals = config?.decimals ?? DEFAULT_DECIMALS;
+  const displayDenom =
+    config?.displayDenom ??
+    (denom.startsWith("u") ? denom.slice(1).toUpperCase() : denom.toUpperCase());
+  const displayAmount = formatAmount(rawAmount, decimals);
 
   return { amount: rawAmount, denom, displayDenom, displayAmount };
 }
 
 /**
  * String-based decimal formatting to avoid floating-point errors.
- * Inserts a decimal point 6 places from the right.
+ * Inserts a decimal point at the given number of places from the right.
  */
-function formatAmount(raw: string): string {
+function formatAmount(raw: string, decimals: number): string {
+  if (decimals === 0) return raw || "0";
+
   // Pad with leading zeros if needed
-  const padded = raw.padStart(DECIMALS + 1, "0");
-  const intPart = padded.slice(0, padded.length - DECIMALS);
-  const decPart = padded.slice(padded.length - DECIMALS);
+  const padded = raw.padStart(decimals + 1, "0");
+  const intPart = padded.slice(0, padded.length - decimals);
+  const decPart = padded.slice(padded.length - decimals);
 
   // Strip trailing zeros from decimal part
   const trimmedDec = decPart.replace(/0+$/, "");

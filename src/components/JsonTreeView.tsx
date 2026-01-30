@@ -37,20 +37,6 @@ function JsonNode({
 }) {
   const { settings } = useSettings();
 
-  // Coin object detection
-  if (settings.parseCoins && isCoinObject(value)) {
-    const coin = parseCoinObject(value as { amount: string; denom: string });
-    return (
-      <div style={{ paddingLeft: depth * 16 }}>
-        {keyName !== undefined && (
-          <span className="text-nebula-300">"{keyName}"</span>
-        )}
-        {keyName !== undefined && <span className="text-cosmos-500">: </span>}
-        <CoinDisplay coin={coin} />
-      </div>
-    );
-  }
-
   if (value === null) {
     return (
       <InlineValue keyName={keyName} depth={depth}>
@@ -76,24 +62,18 @@ function JsonNode({
   }
 
   if (typeof value === "string") {
-    // Coin string detection
-    if (settings.parseCoins) {
-      const coin = parseCoinString(value);
-      if (coin) {
-        return (
-          <InlineValue keyName={keyName} depth={depth}>
-            <CoinDisplay coin={coin} />
-          </InlineValue>
-        );
-      }
-    }
-
-    // Label detection
+    const coin =
+      settings.parseCoins ? parseCoinString(value, settings.coinDenoms) : null;
     const matchedLabel = getLabel(value, settings.labels);
 
     return (
       <InlineValue keyName={keyName} depth={depth}>
         <span className="text-nebula-400">"{value}"</span>
+        {coin && (
+          <span className="ml-1.5">
+            <CoinDisplay coin={coin} />
+          </span>
+        )}
         {matchedLabel && (
           <span className="ml-1.5 px-1.5 py-0.5 rounded bg-nebula-500/15 text-nebula-300 text-xs font-medium">
             {matchedLabel}
@@ -120,12 +100,23 @@ function JsonNode({
 
   // Object
   const entries = Object.entries(value);
+  const coinBadge =
+    settings.parseCoins && isCoinObject(value) ? (
+      <CoinDisplay
+        coin={parseCoinObject(
+          value as { amount: string; denom: string },
+          settings.coinDenoms,
+        )}
+      />
+    ) : null;
+
   return (
     <CollapsibleNode
       keyName={keyName}
       depth={depth}
       bracket={["{", "}"]}
       count={entries.length}
+      badge={coinBadge}
     >
       {entries.map(([k, v]) => (
         <JsonNode key={k} value={v} depth={depth + 1} keyName={k} />
@@ -159,12 +150,14 @@ function CollapsibleNode({
   depth,
   bracket,
   count,
+  badge,
   children,
 }: {
   keyName?: string;
   depth: number;
   bracket: [string, string];
   count: number;
+  badge?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(depth > 3);
@@ -192,6 +185,7 @@ function CollapsibleNode({
           )}
           {collapsed && bracket[1]}
         </span>
+        {badge && <span className="ml-1.5">{badge}</span>}
       </div>
       {!collapsed && (
         <>

@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import LabelManager from "./LabelManager";
+import CoinDenomManager from "./CoinDenomManager";
 import { useSettings } from "../context/SettingsContext";
 
 interface SettingsDrawerProps {
@@ -74,6 +75,11 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
 
           {/* Labels */}
           <LabelManager />
+
+          <div className="border-t border-cosmos-700/50" />
+
+          {/* Coin Denoms */}
+          <CoinDenomManager />
         </div>
       </div>
     </>

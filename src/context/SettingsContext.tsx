@@ -13,6 +13,7 @@ const defaultSettings: Settings = {
   compareMode: false,
   dualPanel: true,
   labels: [],
+  coinDenoms: [],
 };
 
 const SettingsContext = createContext<SettingsContextType | null>(null);
