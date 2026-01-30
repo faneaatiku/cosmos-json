@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cosmos-950: #0a0a1a;
+  --color-cosmos-900: #0f0f2e;
+  --color-cosmos-800: #1a1a3e;
+  --color-cosmos-700: #2a2a5e;
+  --color-cosmos-600: #3b3b7e;
+  --color-cosmos-500: #5b5b9e;
+  --color-cosmos-400: #7c7cbe;
+  --color-cosmos-300: #a0a0d8;
+  --color-cosmos-200: #c4c4ec;
+  --color-cosmos-100: #e0e0f6;
+
+  --color-nebula-500: #8b5cf6;
+  --color-nebula-400: #a78bfa;
+  --color-nebula-300: #c4b5fd;
+
+  --color-star-500: #fbbf24;
+  --color-star-400: #fcd34d;
+}
+
+body {
+  margin: 0;
+  background: var(--color-cosmos-950);
+  color: var(--color-cosmos-100);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+  min-height: 100vh;
+}
+
+/* CodeMirror cosmic theme overrides */
+.cm-editor {
+  background: var(--color-cosmos-900) !important;
+  font-size: 13px;
+}
+
+.cm-editor .cm-gutters {
+  background: var(--color-cosmos-800) !important;
+  color: var(--color-cosmos-500) !important;
+  border-right: 1px solid var(--color-cosmos-700) !important;
+}
+
+.cm-editor .cm-activeLineGutter {
+  background: var(--color-cosmos-700) !important;
+}
+
+.cm-editor .cm-activeLine {
+  background: rgba(139, 92, 246, 0.08) !important;
+}
+
+.cm-editor .cm-selectionBackground {
+  background: rgba(139, 92, 246, 0.25) !important;
+}
+
+.cm-editor .cm-cursor {
+  border-left-color: var(--color-nebula-400) !important;
+}
+
+.cm-editor .cm-content {
+  caret-color: var(--color-nebula-400);
+}
+
+/* jsondiffpatch styled output */
+.jsondiffpatch-delta {
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.jsondiffpatch-added .jsondiffpatch-value pre {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border-left: 3px solid #22c55e;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.jsondiffpatch-modified .jsondiffpatch-value pre {
+  background: rgba(245, 158, 11, 0.15);
+  border-left: 3px solid #f59e0b;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.jsondiffpatch-modified .jsondiffpatch-left-value pre {
+  color: #fbbf24;
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.jsondiffpatch-modified .jsondiffpatch-right-value pre {
+  color: #fcd34d;
+}
+
+.jsondiffpatch-deleted .jsondiffpatch-value pre {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-left: 3px solid #ef4444;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-decoration: line-through;
+}
+
+.jsondiffpatch-unchanged {
+  color: var(--color-cosmos-400);
+}
+
+.jsondiffpatch-node {
+  margin-left: 1em;
+}
+
+.jsondiffpatch-property-name {
+  color: var(--color-nebula-300);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cosmos-900);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-cosmos-600);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-cosmos-500);
+}
