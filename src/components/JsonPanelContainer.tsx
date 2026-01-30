@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Link2, Link2Off } from "lucide-react";
 import { useEditorStore } from "../store/editorStore";
 import { useSettings } from "../context/SettingsContext";
@@ -176,10 +176,10 @@ function PanelDivider({
     <div
       ref={dividerRef}
       onMouseDown={onMouseDown}
-      className="flex flex-col items-center w-8 flex-shrink-0 cursor-col-resize select-none py-6"
+      className="flex flex-col items-center w-10 flex-shrink-0 cursor-col-resize select-none py-6"
     >
       {showEditorSync && (
-        <SyncToggle active={syncEditors} onClick={onToggleSyncEditors} />
+        <SyncToggle active={syncEditors} onClick={onToggleSyncEditors} label="sync" />
       )}
 
       {/* Drag line */}
@@ -188,27 +188,38 @@ function PanelDivider({
       </div>
 
       {showParsedSync && (
-        <SyncToggle active={syncParsed} onClick={onToggleSyncParsed} />
+        <SyncToggle active={syncParsed} onClick={onToggleSyncParsed} label="sync" />
       )}
     </div>
   );
 }
 
-function SyncToggle({ active, onClick }: { active: boolean; onClick: () => void }) {
+function SyncToggle({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
   return (
     <button
       onClick={(e) => {
         e.stopPropagation();
         onClick();
       }}
-      title={active ? "Scroll sync on" : "Scroll sync off"}
-      className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+      title={active ? `Scroll sync on (${label})` : `Scroll sync off (${label})`}
+      className={`flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-lg border transition-all cursor-pointer ${
         active
-          ? "text-nebula-400 bg-nebula-500/20 shadow-[0_0_8px_rgba(139,92,246,0.25)]"
-          : "text-cosmos-600 hover:text-cosmos-400 hover:bg-cosmos-800/60"
+          ? "text-nebula-300 bg-nebula-500/25 border-nebula-500/50 shadow-[0_0_12px_rgba(139,92,246,0.3)]"
+          : "text-cosmos-500 bg-cosmos-800/50 border-cosmos-700/60 hover:text-cosmos-300 hover:border-cosmos-600 hover:bg-cosmos-800/80"
       }`}
     >
-      {active ? <Link2 size={14} /> : <Link2Off size={14} />}
+      {active ? <Link2 size={16} /> : <Link2Off size={16} />}
+      <span className="text-[9px] font-semibold uppercase leading-none tracking-wide">
+        {label}
+      </span>
     </button>
   );
 }
@@ -224,26 +235,88 @@ function ParsedSection({
   json: string;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
 }) {
-  if (!json.trim()) return null;
+  const [height, setHeight] = useState(300);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
 
-  try {
-    const parsed = JSON.parse(json);
-    return (
-      <div
-        ref={scrollRef}
-        className="rounded-xl border border-cosmos-700/50 bg-cosmos-900/40 backdrop-blur-sm p-4 overflow-auto max-h-[400px]"
-      >
-        <div className="text-xs font-semibold text-cosmos-500 uppercase tracking-wider mb-2">
-          Parsed View
-        </div>
-        <JsonTreeView data={parsed} />
-      </div>
-    );
-  } catch {
+  // Combine the external scrollRef with the internal wrapperRef
+  const setRefs = useCallback(
+    (el: HTMLDivElement | null) => {
+      (wrapperRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+      if (scrollRef && "current" in scrollRef) {
+        (scrollRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+      }
+    },
+    [scrollRef],
+  );
+
+  const onHandleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    dragging.current = true;
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+  }, []);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!dragging.current || !wrapperRef.current) return;
+      const rect = wrapperRef.current.getBoundingClientRect();
+      const newHeight = e.clientY - rect.top;
+      setHeight(Math.min(Math.max(newHeight, 80), window.innerHeight - 200));
+    };
+
+    const onMouseUp = () => {
+      if (!dragging.current) return;
+      dragging.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
+
+  const parsed = useMemo(() => {
+    if (!json.trim()) return undefined;
+    try {
+      return JSON.parse(json);
+    } catch {
+      return null;
+    }
+  }, [json]);
+
+  if (parsed === undefined) return null;
+
+  if (parsed === null) {
     return (
       <div className="rounded-xl border border-red-500/30 bg-red-950/20 p-3 text-red-400 text-sm">
         Invalid JSON
       </div>
     );
   }
+
+  return (
+    <div className="flex flex-col">
+      <div
+        ref={setRefs}
+        style={{ height: `${height}px` }}
+        className="rounded-xl border border-cosmos-700/50 bg-cosmos-900/40 backdrop-blur-sm p-4 overflow-auto"
+      >
+        <div className="text-xs font-semibold text-cosmos-500 uppercase tracking-wider mb-2">
+          Parsed View
+        </div>
+        <JsonTreeView data={parsed} />
+      </div>
+      <div
+        onMouseDown={onHandleMouseDown}
+        className="h-2 flex-shrink-0 cursor-row-resize group flex items-center justify-center my-0.5"
+      >
+        <div className="h-0.5 w-12 rounded-full bg-cosmos-700 group-hover:bg-nebula-500 group-hover:w-20 transition-all" />
+      </div>
+    </div>
+  );
 }
