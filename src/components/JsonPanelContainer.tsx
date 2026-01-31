@@ -381,21 +381,25 @@ function ParsedSection({
   return (
     <TreeViewProvider ancestorPaths={analysis.ancestorPaths} maxDepth={analysis.maxDepth}>
       <div className="flex flex-col">
-        <div className="relative">
-          <div
-            ref={setRefs}
-            style={{ height: `${height}px` }}
-            className="rounded-xl border border-cosmos-700/50 bg-cosmos-900/40 backdrop-blur-sm p-4 overflow-auto"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-xs font-semibold text-cosmos-500 uppercase tracking-wider">
-                Parsed View
-              </div>
-              <ParsedToolbar />
+        <div
+          style={{ height: `${height}px` }}
+          className="rounded-xl border border-cosmos-700/50 bg-cosmos-900/40 backdrop-blur-sm flex flex-col overflow-hidden"
+        >
+          <div className="flex items-center justify-between px-4 pt-3 pb-2 flex-shrink-0">
+            <div className="text-xs font-semibold text-cosmos-500 uppercase tracking-wider">
+              Parsed View
             </div>
-            <JsonTreeView data={parsed} />
+            <ParsedToolbar />
           </div>
-          <ScrollbarMarkers markers={analysis.markers} height={height} containerRef={wrapperRef} />
+          <div className="relative flex-1 min-h-0">
+            <div
+              ref={setRefs}
+              className="h-full overflow-auto px-4 pb-4"
+            >
+              <JsonTreeView data={parsed} />
+            </div>
+            <ScrollbarMarkers markers={analysis.markers} containerRef={wrapperRef} />
+          </div>
         </div>
         <div
           onMouseDown={(e) => {
@@ -454,13 +458,14 @@ function ParsedToolbar() {
             ? "All levels expanded"
             : `Expand one more level (${expandLevel}/${maxDepth + 1})`
         }
-        className={`p-1 rounded transition-all ${
+        className={`p-1 rounded transition-all flex items-center gap-0.5 ${
           allExpanded
             ? "text-cosmos-700"
             : "text-cosmos-500 hover:text-cosmos-200 hover:bg-cosmos-700/60 cursor-pointer"
         }`}
       >
         <ChevronsUpDown size={13} />
+        <span className="text-[10px] font-medium leading-none tabular-nums">{expandLevel}</span>
       </button>
       <button
         onClick={allCollapsed ? undefined : collapseAll}
@@ -494,20 +499,15 @@ function ParsedToolbar() {
 
 function ScrollbarMarkers({
   markers,
-  height,
   containerRef,
 }: {
   markers: Array<{ fraction: number; type: "coin" | "label" }>;
-  height: number;
   containerRef: React.RefObject<HTMLDivElement | null>;
 }) {
   if (markers.length === 0) return null;
 
   return (
-    <div
-      className="absolute top-0 right-0 w-2 pointer-events-none"
-      style={{ height: `${height}px`, borderRadius: "0 12px 12px 0" }}
-    >
+    <div className="absolute top-0 right-0 w-2 h-full pointer-events-none">
       {markers.map((m, i) => (
         <div
           key={i}
@@ -518,8 +518,9 @@ function ScrollbarMarkers({
           onClick={() => {
             const container = containerRef.current;
             if (!container) return;
+            const visibleHeight = container.clientHeight;
             container.scrollTo({
-              top: m.fraction * container.scrollHeight - height / 2,
+              top: m.fraction * container.scrollHeight - visibleHeight / 2,
               behavior: "smooth",
             });
           }}
