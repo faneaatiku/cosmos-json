@@ -1,8 +1,17 @@
 import { useCallback, useRef, useEffect, useMemo } from "react";
-import { Link2, Link2Off } from "lucide-react";
+import {
+  Link2,
+  Link2Off,
+  ChevronsUpDown,
+  ChevronsDownUp,
+  Filter,
+} from "lucide-react";
 import { useEditorStore } from "../store/editorStore";
 import { useSettings } from "../context/SettingsContext";
+import { TreeViewProvider, useTreeView } from "../context/TreeViewContext";
 import { useSyncScroll } from "../hooks/useSyncScroll";
+import { analyzeJson } from "../lib/jsonAnalyzer";
+import { sortKeys } from "../lib/jsonTransform";
 import JsonPanel from "./JsonPanel";
 import JsonTreeView from "./JsonTreeView";
 import DiffView from "./DiffView";
@@ -317,6 +326,7 @@ function ParsedSection({
   height: number;
   onHeightChange: (height: number) => void;
 }) {
+  const { settings } = useSettings();
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const setRefs = useCallback(
@@ -338,6 +348,26 @@ function ParsedSection({
     }
   }, [json]);
 
+  const transformed = useMemo(() => {
+    if (parsed === undefined || parsed === null) return parsed;
+    return settings.sortKeys ? sortKeys(parsed) : parsed;
+  }, [parsed, settings.sortKeys]);
+
+  const analysis = useMemo(() => {
+    if (!transformed)
+      return {
+        interestingPaths: new Set<string>(),
+        ancestorPaths: new Set<string>(),
+        markers: [] as Array<{ fraction: number; type: "coin" | "label" }>,
+        maxDepth: 0,
+      };
+    return analyzeJson(transformed, {
+      parseCoins: settings.parseCoins,
+      labels: settings.labels,
+      coinDenoms: settings.coinDenoms,
+    });
+  }, [transformed, settings.parseCoins, settings.labels, settings.coinDenoms]);
+
   if (parsed === undefined) return null;
 
   if (parsed === null) {
@@ -349,43 +379,152 @@ function ParsedSection({
   }
 
   return (
-    <div className="flex flex-col">
-      <div
-        ref={setRefs}
-        style={{ height: `${height}px` }}
-        className="rounded-xl border border-cosmos-700/50 bg-cosmos-900/40 backdrop-blur-sm p-4 overflow-auto"
-      >
-        <div className="text-xs font-semibold text-cosmos-500 uppercase tracking-wider mb-2">
-          Parsed View
+    <TreeViewProvider ancestorPaths={analysis.ancestorPaths} maxDepth={analysis.maxDepth}>
+      <div className="flex flex-col">
+        <div className="relative">
+          <div
+            ref={setRefs}
+            style={{ height: `${height}px` }}
+            className="rounded-xl border border-cosmos-700/50 bg-cosmos-900/40 backdrop-blur-sm p-4 overflow-auto"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-semibold text-cosmos-500 uppercase tracking-wider">
+                Parsed View
+              </div>
+              <ParsedToolbar />
+            </div>
+            <JsonTreeView data={parsed} />
+          </div>
+          <ScrollbarMarkers markers={analysis.markers} height={height} containerRef={wrapperRef} />
         </div>
-        <JsonTreeView data={parsed} />
+        <div
+          onMouseDown={(e) => {
+            e.preventDefault();
+            document.body.style.cursor = "row-resize";
+            document.body.style.userSelect = "none";
+            const baseTop = wrapperRef.current?.getBoundingClientRect().top ?? 0;
+
+            const onMove = (ev: MouseEvent) => {
+              const h = ev.clientY - baseTop;
+              onHeightChange(Math.min(Math.max(h, 80), window.innerHeight - 200));
+            };
+
+            const onUp = () => {
+              document.body.style.cursor = "";
+              document.body.style.userSelect = "";
+              document.removeEventListener("mousemove", onMove);
+              document.removeEventListener("mouseup", onUp);
+            };
+
+            document.addEventListener("mousemove", onMove);
+            document.addEventListener("mouseup", onUp);
+          }}
+          className="h-2 flex-shrink-0 cursor-row-resize group flex items-center justify-center my-0.5"
+        >
+          <div className="h-0.5 w-12 rounded-full bg-cosmos-700 group-hover:bg-nebula-500 group-hover:w-20 transition-all" />
+        </div>
       </div>
-      <div
-        onMouseDown={(e) => {
-          e.preventDefault();
-          document.body.style.cursor = "row-resize";
-          document.body.style.userSelect = "none";
-          const baseTop = wrapperRef.current?.getBoundingClientRect().top ?? 0;
+    </TreeViewProvider>
+  );
+}
 
-          const onMove = (ev: MouseEvent) => {
-            const h = ev.clientY - baseTop;
-            onHeightChange(Math.min(Math.max(h, 80), window.innerHeight - 200));
-          };
+// ---------------------------------------------------------------------------
+// ParsedToolbar — expand/collapse all + filter buttons
+// ---------------------------------------------------------------------------
 
-          const onUp = () => {
-            document.body.style.cursor = "";
-            document.body.style.userSelect = "";
-            document.removeEventListener("mousemove", onMove);
-            document.removeEventListener("mouseup", onUp);
-          };
+function ParsedToolbar() {
+  const {
+    expandLevel,
+    expandOneLevel,
+    collapseAll,
+    filterMode,
+    toggleFilterMode,
+    maxDepth,
+  } = useTreeView();
 
-          document.addEventListener("mousemove", onMove);
-          document.addEventListener("mouseup", onUp);
-        }}
-        className="h-2 flex-shrink-0 cursor-row-resize group flex items-center justify-center my-0.5"
+  const allExpanded = expandLevel > maxDepth;
+  const allCollapsed = expandLevel === 0;
+
+  return (
+    <div className="flex items-center gap-0.5">
+      <button
+        onClick={allExpanded ? undefined : expandOneLevel}
+        title={
+          allExpanded
+            ? "All levels expanded"
+            : `Expand one more level (${expandLevel}/${maxDepth + 1})`
+        }
+        className={`p-1 rounded transition-all ${
+          allExpanded
+            ? "text-cosmos-700"
+            : "text-cosmos-500 hover:text-cosmos-200 hover:bg-cosmos-700/60 cursor-pointer"
+        }`}
       >
-        <div className="h-0.5 w-12 rounded-full bg-cosmos-700 group-hover:bg-nebula-500 group-hover:w-20 transition-all" />
-      </div>
+        <ChevronsUpDown size={13} />
+      </button>
+      <button
+        onClick={allCollapsed ? undefined : collapseAll}
+        title={allCollapsed ? "All levels collapsed" : "Collapse all"}
+        className={`p-1 rounded transition-all ${
+          allCollapsed
+            ? "text-cosmos-700"
+            : "text-cosmos-500 hover:text-cosmos-200 hover:bg-cosmos-700/60 cursor-pointer"
+        }`}
+      >
+        <ChevronsDownUp size={13} />
+      </button>
+      <button
+        onClick={toggleFilterMode}
+        title={filterMode ? "Show all entries" : "Show only coins & labels"}
+        className={`p-1 rounded transition-all cursor-pointer ${
+          filterMode
+            ? "text-star-400 bg-star-500/15"
+            : "text-cosmos-500 hover:text-cosmos-200 hover:bg-cosmos-700/60"
+        }`}
+      >
+        <Filter size={13} />
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ScrollbarMarkers — overlay showing coin/label positions on the scrollbar
+// ---------------------------------------------------------------------------
+
+function ScrollbarMarkers({
+  markers,
+  height,
+  containerRef,
+}: {
+  markers: Array<{ fraction: number; type: "coin" | "label" }>;
+  height: number;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  if (markers.length === 0) return null;
+
+  return (
+    <div
+      className="absolute top-0 right-0 w-2 pointer-events-none"
+      style={{ height: `${height}px`, borderRadius: "0 12px 12px 0" }}
+    >
+      {markers.map((m, i) => (
+        <div
+          key={i}
+          className={`absolute right-0 w-1.5 rounded-full pointer-events-auto cursor-pointer ${
+            m.type === "coin" ? "bg-star-400/70" : "bg-nebula-400/70"
+          }`}
+          style={{ top: `${m.fraction * 100}%`, height: "3px" }}
+          onClick={() => {
+            const container = containerRef.current;
+            if (!container) return;
+            container.scrollTo({
+              top: m.fraction * container.scrollHeight - height / 2,
+              behavior: "smooth",
+            });
+          }}
+        />
+      ))}
     </div>
   );
 }

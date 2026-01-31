@@ -75,6 +75,52 @@ function formatCoin(
  * String-based decimal formatting to avoid floating-point errors.
  * Inserts a decimal point at the given number of places from the right.
  */
+/**
+ * Try to parse a stringified JSON value and find coin objects within it.
+ * Only attempts parsing for strings starting with '{' or '['.
+ */
+export function parseStringifiedCoins(
+  value: string,
+  denomConfigs: CoinDenomConfig[] = [],
+): ParsedCoin[] {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return [];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch {
+    return [];
+  }
+
+  return collectCoins(parsed, denomConfigs, 0);
+}
+
+function collectCoins(
+  value: unknown,
+  denomConfigs: CoinDenomConfig[],
+  depth: number,
+): ParsedCoin[] {
+  if (depth > 10 || typeof value !== "object" || value === null) return [];
+
+  if (isCoinObject(value)) {
+    return [
+      parseCoinObject(
+        value as { amount: string; denom: string },
+        denomConfigs,
+      ),
+    ];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectCoins(item, denomConfigs, depth + 1));
+  }
+
+  return Object.values(value).flatMap((v) =>
+    collectCoins(v, denomConfigs, depth + 1),
+  );
+}
+
 function formatAmount(raw: string, decimals: number): string {
   if (decimals === 0) return raw || "0";
 

@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { useSettings } from "../context/SettingsContext";
+import { useTreeView } from "../context/TreeViewContext";
 import {
   parseCoinString,
   isCoinObject,
   parseCoinObject,
+  parseStringifiedCoins,
 } from "../lib/coinParser";
 import { getLabel } from "../lib/labeler";
 import { sortKeys } from "../lib/jsonTransform";
@@ -21,7 +23,7 @@ export default function JsonTreeView({ data }: JsonTreeViewProps) {
 
   return (
     <div className="font-mono text-sm leading-relaxed">
-      <JsonNode value={transformed} depth={0} />
+      <JsonNode value={transformed} depth={0} path="$" />
     </div>
   );
 }
@@ -30,10 +32,12 @@ function JsonNode({
   value,
   depth,
   keyName,
+  path,
 }: {
   value: JsonValue;
   depth: number;
   keyName?: string;
+  path: string;
 }) {
   const { settings } = useSettings();
 
@@ -65,17 +69,29 @@ function JsonNode({
     const coin =
       settings.parseCoins ? parseCoinString(value, settings.coinDenoms) : null;
     const matchedLabel = getLabel(value, settings.labels);
+    const stringifiedCoins =
+      !coin && settings.parseCoins
+        ? parseStringifiedCoins(value, settings.coinDenoms)
+        : [];
 
     return (
       <InlineValue keyName={keyName} depth={depth}>
         <span className="text-nebula-400">"{value}"</span>
         {coin && (
-          <span className="ml-1.5">
+          <span className="ml-1.5" data-marker="coin">
             <CoinDisplay coin={coin} />
           </span>
         )}
+        {stringifiedCoins.map((sc, i) => (
+          <span key={i} className="ml-1.5" data-marker="coin">
+            <CoinDisplay coin={sc} />
+          </span>
+        ))}
         {matchedLabel && (
-          <span className="ml-1.5 px-1.5 py-0.5 rounded bg-nebula-500/15 text-nebula-300 text-xs font-medium">
+          <span
+            className="ml-1.5 px-1.5 py-0.5 rounded bg-nebula-500/15 text-nebula-300 text-xs font-medium"
+            data-marker="label"
+          >
             {matchedLabel}
           </span>
         )}
@@ -90,9 +106,15 @@ function JsonNode({
         depth={depth}
         bracket={["[", "]"]}
         count={value.length}
+        path={path}
       >
         {value.map((item, i) => (
-          <JsonNode key={i} value={item} depth={depth + 1} />
+          <JsonNode
+            key={i}
+            value={item}
+            depth={depth + 1}
+            path={`${path}.${i}`}
+          />
         ))}
       </CollapsibleNode>
     );
@@ -117,9 +139,17 @@ function JsonNode({
       bracket={["{", "}"]}
       count={entries.length}
       badge={coinBadge}
+      isCoin={!!coinBadge}
+      path={path}
     >
       {entries.map(([k, v]) => (
-        <JsonNode key={k} value={v} depth={depth + 1} keyName={k} />
+        <JsonNode
+          key={k}
+          value={v}
+          depth={depth + 1}
+          keyName={k}
+          path={`${path}.${k}`}
+        />
       ))}
     </CollapsibleNode>
   );
@@ -151,23 +181,47 @@ function CollapsibleNode({
   bracket,
   count,
   badge,
+  isCoin,
   children,
+  path,
 }: {
   keyName?: string;
   depth: number;
   bracket: [string, string];
   count: number;
   badge?: React.ReactNode;
+  isCoin?: boolean;
   children: React.ReactNode;
+  path: string;
 }) {
-  const [collapsed, setCollapsed] = useState(depth > 3);
+  const { expandLevel, filterMode, ancestorPaths } = useTreeView();
+  const [manualOverride, setManualOverride] = useState<boolean | null>(null);
+  const prevExpandLevel = useRef(expandLevel);
+  const prevFilterMode = useRef(filterMode);
+
+  useEffect(() => {
+    if (
+      expandLevel !== prevExpandLevel.current ||
+      filterMode !== prevFilterMode.current
+    ) {
+      setManualOverride(null);
+      prevExpandLevel.current = expandLevel;
+      prevFilterMode.current = filterMode;
+    }
+  }, [expandLevel, filterMode]);
+
+  const contextCollapsed = filterMode
+    ? !ancestorPaths.has(path)
+    : depth >= expandLevel;
+
+  const collapsed = manualOverride ?? contextCollapsed;
 
   return (
     <div>
       <div
         style={{ paddingLeft: depth * 16 }}
         className="cursor-pointer hover:bg-cosmos-800/40 rounded flex items-center gap-0.5"
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={() => setManualOverride(!collapsed)}
       >
         <span className="text-cosmos-500 w-4 flex-shrink-0">
           {collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
@@ -185,7 +239,11 @@ function CollapsibleNode({
           )}
           {collapsed && bracket[1]}
         </span>
-        {badge && <span className="ml-1.5">{badge}</span>}
+        {badge && (
+          <span className="ml-1.5" data-marker={isCoin ? "coin" : undefined}>
+            {badge}
+          </span>
+        )}
       </div>
       {!collapsed && (
         <>
