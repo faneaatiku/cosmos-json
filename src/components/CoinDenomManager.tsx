@@ -9,12 +9,12 @@ export default function CoinDenomManager() {
   const [displayDenom, setDisplayDenom] = useState("");
 
   const addDenom = () => {
-    const trimmedDenom = denom.trim().toLowerCase();
+    const trimmedDenom = denom.trim();
     const trimmedDisplay = displayDenom.trim();
     const parsedDecimals = parseInt(decimals, 10);
     if (!trimmedDenom || !trimmedDisplay) return;
     if (isNaN(parsedDecimals) || parsedDecimals < 0) return;
-    if (settings.coinDenoms.some((c) => c.denom === trimmedDenom)) return;
+    if (settings.coinDenoms.some((c) => c.denom.toLowerCase() === trimmedDenom.toLowerCase())) return;
 
     updateSettings({
       coinDenoms: [

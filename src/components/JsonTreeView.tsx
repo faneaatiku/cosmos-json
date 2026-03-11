@@ -66,24 +66,25 @@ function JsonNode({
   }
 
   if (typeof value === "string") {
-    const coin =
-      settings.parseCoins ? parseCoinString(value, settings.coinDenoms) : null;
+    const coins = settings.parseCoins
+      ? parseCoinString(value, settings.coinDenoms)
+      : [];
     const matchedLabel = getLabel(value, settings.labels);
     const stringifiedCoins =
-      !coin && settings.parseCoins
+      coins.length === 0 && settings.parseCoins
         ? parseStringifiedCoins(value, settings.coinDenoms)
         : [];
 
     return (
       <InlineValue keyName={keyName} depth={depth}>
         <span className="text-nebula-400">"{value}"</span>
-        {coin && (
-          <span className="ml-1.5" data-marker="coin">
-            <CoinDisplay coin={coin} />
-          </span>
-        )}
-        {stringifiedCoins.map((sc, i) => (
+        {coins.map((c, i) => (
           <span key={i} className="ml-1.5" data-marker="coin">
+            <CoinDisplay coin={c} />
+          </span>
+        ))}
+        {stringifiedCoins.map((sc, i) => (
+          <span key={`sc-${i}`} className="ml-1.5" data-marker="coin">
             <CoinDisplay coin={sc} />
           </span>
         ))}

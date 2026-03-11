@@ -62,7 +62,7 @@ export function analyzeJson(
       currentLine++;
       const hasCoin =
         options.parseCoins &&
-        parseCoinString(value, options.coinDenoms) !== null;
+        parseCoinString(value, options.coinDenoms).length > 0;
       const hasLabel = getLabel(value, options.labels) !== null;
       const hasStringifiedCoin =
         options.parseCoins &&
